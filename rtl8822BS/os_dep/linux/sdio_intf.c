@@ -112,12 +112,12 @@ static struct sdio_drv_priv sdio_drvpriv = {
 	.r871xs_drv.remove = rtw_dev_remove,
 	.r871xs_drv.name = (char *)DRV_NAME,
 	.r871xs_drv.id_table = sdio_ids,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29))
 	.r871xs_drv.drv = {
 		.shutdown = rtw_dev_shutdown,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29))
 		.pm = &rtw_sdio_pm_ops,
-	}
 #endif
+	}
 };
 
 static struct rtw_if_operations sdio_ops = {

@@ -649,6 +649,7 @@ struct mlme_priv {
 	_timer set_scan_deny_timer;
 	ATOMIC_T set_scan_deny; /* 0: allowed, 1: deny */
 #endif
+	u8 wpa_phase;/*wpa_phase after wps finished*/
 
 	struct qos_priv qospriv;
 
@@ -1021,7 +1022,7 @@ extern struct wlan_network *rtw_get_oldest_wlan_network(_queue *scanned_queue);
 struct wlan_network *_rtw_find_same_network(_queue *scanned_queue, struct wlan_network *network);
 struct wlan_network *rtw_find_same_network(_queue *scanned_queue, struct wlan_network *network);
 
-extern void rtw_free_assoc_resources(_adapter *adapter, int lock_scanned_queue);
+extern void rtw_free_assoc_resources(_adapter *adapter, u8 lock_scanned_queue);
 extern void rtw_indicate_disconnect(_adapter *adapter, u16 reason, u8 locally_generated);
 extern int rtw_indicate_connect(_adapter *adapter);
 void rtw_indicate_scan_done(_adapter *padapter, bool aborted);

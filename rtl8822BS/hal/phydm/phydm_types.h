@@ -131,7 +131,7 @@ enum rt_spinlock_type {
 	#define	u64		u8Byte
 	#define	s64		s8Byte
 
-	#define	timer_list	_RT_TIMER
+	#define	phydm_timer_list	_RT_TIMER
 	
 
 #elif (DM_ODM_SUPPORT_TYPE == ODM_AP)
@@ -150,6 +150,8 @@ enum rt_spinlock_type {
 	#define	sta_info stat_info
 	#define	boolean	bool
 
+	#define	phydm_timer_list	timer_list
+	
 #elif (DM_ODM_SUPPORT_TYPE == ODM_CE) && defined(DM_ODM_CE_MAC80211)
 
 	#include <asm/byteorder.h>
@@ -192,7 +194,7 @@ enum rt_spinlock_type {
 
 	#define sta_info	rtl_sta_info
 	#define	boolean		bool
-
+	#define	phydm_timer_list	rtw_timer_list
 #elif (DM_ODM_SUPPORT_TYPE == ODM_CE)
 	#include <drv_types.h>
 
@@ -225,13 +227,16 @@ enum rt_spinlock_type {
 	#define	FPGA_TWO_MAC_VERIFICATION	0
 	#define	RTL8881A_SUPPORT	0
 
+
 	#if (defined(TESTCHIP_SUPPORT))
 		#define	PHYDM_TESTCHIP_SUPPORT 1
 	#else
 		#define	PHYDM_TESTCHIP_SUPPORT 0
 	#endif
-#endif
 
+	#define	phydm_timer_list	rtw_timer_list
+#endif
+	
 #define READ_NEXT_PAIR(v1, v2, i) do { if (i+2 >= array_len) break; i += 2; v1 = array[i]; v2 = array[i+1]; } while (0)
 #define COND_ELSE  2
 #define COND_ENDIF 3

@@ -59,7 +59,7 @@ struct adaptive_soml {
 	RT_WORK_ITEM	phydm_adaptive_soml_workitem;
 #endif
 #endif
-	struct timer_list		phydm_adaptive_soml_timer;
+	struct phydm_timer_list		phydm_adaptive_soml_timer;
 };
 
 void
@@ -71,7 +71,7 @@ phydm_soml_on_off(
 #if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
 void
 phydm_adaptive_soml_callback(
-	struct timer_list		*p_timer
+	struct phydm_timer_list		*p_timer
 );
 
 void

@@ -1611,7 +1611,7 @@ beamforming_timer_callback(
 void
 beamforming_sw_timer_callback(
 #if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
-	struct timer_list		*p_timer
+	struct phydm_timer_list		*p_timer
 #elif (DM_ODM_SUPPORT_TYPE == ODM_CE)
 	void *function_context
 #endif

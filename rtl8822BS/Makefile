@@ -49,7 +49,6 @@ CONFIG_MP_INCLUDED = y
 CONFIG_POWER_SAVING = y
 CONFIG_USB_AUTOSUSPEND = n
 CONFIG_HW_PWRP_DETECTION = n
-CONFIG_WIFI_TEST = n
 CONFIG_BT_COEXIST = y
 CONFIG_INTEL_WIDI = n
 CONFIG_WAPI_SUPPORT = n
@@ -77,12 +76,14 @@ CONFIG_RTW_NETIF_SG = y
 CONFIG_RTW_VHT_2G4 = y
 CONFIG_RTW_IPCAM_APPLICATION = n
 CONFIG_RTW_REPEATER_SON = n
-CONFIG_RTW_WIFI_HAL = y
+CONFIG_PLATFORM_ANDROID = n
+CONFIG_RTW_WIFI_HAL = n
+CONFIG_RTW_IP_REACHABILITY_PATCH = y
 ########################## Debug ###########################
 CONFIG_RTW_DEBUG = y
 # default log level is _DRV_INFO_ = 4,
 # please refer to "How_to_set_driver_debug_log_level.doc" to set the available level.
-CONFIG_RTW_LOG_LEVEL = 2
+CONFIG_RTW_LOG_LEVEL = 4
 ######################## Wake On Lan ##########################
 CONFIG_WOWLAN = n
 CONFIG_WAKEUP_TYPE = 0x7 #bit2: deauth, bit1: unicast, bit0: magic pkt.
@@ -154,7 +155,8 @@ CONFIG_PLATFORM_HISILICON_HI3798 = n
 CONFIG_PLATFORM_NV_TK1 = n
 CONFIG_PLATFORM_RTL8197D = n
 CONFIG_PLATFORM_ZTE_ZX296716 = n
-###############################################################
+########### CUSTOMER ################################
+CONFIG_CUSTOMER_HUAWEI_GENERAL = n
 
 CONFIG_DRVEXT_MODULE = n
 
@@ -808,10 +810,6 @@ ifeq ($(CONFIG_HW_PWRP_DETECTION), y)
 EXTRA_CFLAGS += -DCONFIG_HW_PWRP_DETECTION
 endif
 
-ifeq ($(CONFIG_WIFI_TEST), y)
-EXTRA_CFLAGS += -DCONFIG_WIFI_TEST
-endif
-
 ifeq ($(CONFIG_BT_COEXIST), y)
 EXTRA_CFLAGS += -DCONFIG_BT_COEXIST
 endif
@@ -1004,10 +1002,21 @@ else
 EXTRA_CFLAGS += -DRTW_VHT_2G4=0
 endif
 
+ifeq ($(CONFIG_PLATFORM_ANDROID), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_ANDROID
+endif
+
 ifeq ($(CONFIG_RTW_WIFI_HAL), y)
 #EXTRA_CFLAGS += -DCONFIG_RTW_WIFI_HAL_DEBUG
 EXTRA_CFLAGS += -DCONFIG_RTW_WIFI_HAL
 EXTRA_CFLAGS += -DCONFIG_RTW_CFGVEDNOR_LLSTATS
+EXTRA_CFLAGS += -DCONFIG_RTW_CFGVENDOR_RANDOM_MAC_OUI
+EXTRA_CFLAGS += -DCONFIG_RTW_CFGVEDNOR_RSSIMONITOR
+EXTRA_CFLAGS += -DCONFIG_RTW_CFGVENDOR_WIFI_LOGGER
+endif
+
+ifeq ($(CONFIG_RTW_IP_REACHABILITY_PATCH), y)
+EXTRA_CFLAGS += -DRTW_IP_REACHABILITY_PATCH
 endif
 
 ifeq ($(CONFIG_MP_VHT_HW_TX_MODE), y)
@@ -1644,6 +1653,7 @@ endif
 ifeq ($(CONFIG_PLATFORM_HISILICON_HI3798), y)
 EXTRA_CFLAGS += -DCONFIG_PLATFORM_HISILICON
 EXTRA_CFLAGS += -DCONFIG_PLATFORM_HISILICON_HI3798
+#EXTRA_CFLAGS += -DCONFIG_PLATFORM_HISILICON_HI3798_MV200_HDMI_DONGLE
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
 EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
@@ -1651,11 +1661,16 @@ EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
 # default setting for Android 5.x and later
 #EXTRA_CFLAGS += -DCONFIG_RADIO_WORK
 
-ifeq ($(CONFIG_SDIO_HCI), y)
-EXTRA_CFLAGS += -DCONFIG_PLATFORM_OPS
-_PLATFORM_FILES += platform/platform_hisilicon_hi3798_sdio.o
-EXTRA_CFLAGS += -DCONFIG_HISI_SDIO_ID=1
-endif
+# Change active scan time in each channel, unit is ms
+#EXTRA_CFLAGS += -DSURVEY_TO_ACTIVE=50
+
+# If system could power on and recognize Wi-Fi SDIO automatically,
+# platfrom operations are not necessary.
+#ifeq ($(CONFIG_SDIO_HCI), y)
+#EXTRA_CFLAGS += -DCONFIG_PLATFORM_OPS
+#_PLATFORM_FILES += platform/platform_hisilicon_hi3798_sdio.o
+#EXTRA_CFLAGS += -DCONFIG_HISI_SDIO_ID=1
+#endif
 
 ARCH ?= arm
 CROSS_COMPILE ?= /HiSTBAndroidV600R003C00SPC021_git_0512/device/hisilicon/bigfish/sdk/tools/linux/toolchains/arm-histbv310-linux/bin/arm-histbv310-linux-
@@ -1666,6 +1681,7 @@ endif
 
 ifeq ($(CONFIG_RTL8822B), y)
 ifeq ($(CONFIG_SDIO_HCI), y)
+CONFIG_RTL8822BS ?= m
 # default 8822bs module name would be 88x2bs, but Hisilicon use rtl8822bs
 USER_MODULE_NAME := rtl8822bs
 endif
@@ -1707,19 +1723,23 @@ endif
 endif
 
 ifeq ($(CONFIG_PLATFORM_AML_S905), y)
-EXTRA_CFLAGS += -Wno-error=date-time
 EXTRA_CFLAGS += -DCONFIG_PLATFORM_AML_S905
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -fno-pic
 EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DCONFIG_CONCURRENT_MODE
-EXTRA_CFLAGS += -DCONFIG_P2P_IPS -DRTW_USE_CFG80211_STA_EVENT -DCONFIG_RTW_IOCTL_SET_COUNTRY
+EXTRA_CFLAGS += -DCONFIG_P2P_IPS -DRTW_USE_CFG80211_STA_EVENT
 
 # Enable this for Android 5.0 and later
 EXTRA_CFLAGS += -DCONFIG_RADIO_WORK
 
-ifeq ($(CONFIG_SDIO_HCI), y)
-EXTRA_CFLAGS += -DCONFIG_PLATFORM_OPS
-_PLATFORM_FILES += platform/platform_aml_s905_sdio.o
-endif
+# Change active scan time in each channel, unit is ms
+#EXTRA_CFLAGS += -DSURVEY_TO_ACTIVE=50
+
+# If system could power on and recognize Wi-Fi SDIO automatically,
+# platfrom operations are not necessary.
+#ifeq ($(CONFIG_SDIO_HCI), y)
+#EXTRA_CFLAGS += -DCONFIG_PLATFORM_OPS
+#_PLATFORM_FILES += platform/platform_aml_s905_sdio.o
+#endif
 
 ARCH ?= arm64
 CROSS_COMPILE ?= /4.4_S905L_8822bs_compile/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/bin/aarch64-linux-gnu-
@@ -1884,6 +1904,14 @@ endif
 
 endif
 
+########### CUSTOMER ################################
+ifeq ($(CONFIG_CUSTOMER_HUAWEI_GENERAL), y)
+CONFIG_CUSTOMER_HUAWEI = y
+endif
+
+ifeq ($(CONFIG_CUSTOMER_HUAWEI), y)
+EXTRA_CFLAGS += -DCONFIG_HUAWEI_PROC
+endif
 
 ifeq ($(CONFIG_MULTIDRV), y)
 
@@ -1975,7 +2003,7 @@ ifeq ($(CONFIG_RTL8723B), y)
 $(MODULE_NAME)-$(CONFIG_MP_INCLUDED)+= core/rtw_bt_mp.o
 endif
 
-obj-m:= $(MODULE_NAME).o
+obj-m := $(MODULE_NAME).o
 
 else
 
@@ -2040,17 +2068,17 @@ config_r:
 
 clean:
 	#$(MAKE) -C $(KSRC) M=$(shell pwd) clean
-	cd hal ; rm -fr */*/*/*.mod.c */*/*/*.mod */*/*/*.o */*/*/.*.cmd */*/*/*.ko
-	cd hal ; rm -fr */*/*.mod.c */*/*.mod */*/*.o */*/.*.cmd */*/*.ko
-	cd hal ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko
-	cd hal ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd core/efuse ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd core ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd os_dep/linux ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd os_dep ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
-	cd platform ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko
+	cd hal ; rm -fr */*/*/*.mod.c */*/*/*.mod */*/*/*.o */*/*/.*.cmd */*/*/*.ko */*/*/*.ur-safe
+	cd hal ; rm -fr */*/*.mod.c */*/*.mod */*/*.o */*/.*.cmd */*/*.ko */*/*.ur-safe
+	cd hal ; rm -fr */*.mod.c */*.mod */*.o */.*.cmd */*.ko */*.ur-safe
+	cd hal ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko *.ur-safe
+	cd core/efuse ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko *.ur-safe
+	cd core ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko *.ur-safe
+	cd os_dep/linux ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko *.ur-safe
+	cd os_dep ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko *.ur-safe
+	cd platform ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko *.ur-safe
 	rm -fr Module.symvers ; rm -fr Module.markers ; rm -fr modules.order
 	rm -fr *.mod.c *.mod *.o .*.cmd *.ko *~
-	rm -fr .tmp_versions
+	rm -fr .tmp_versions *.ur-safe
 endif
 

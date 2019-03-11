@@ -319,7 +319,14 @@ void hal_mpt_SetChannel(PADAPTER pAdapter)
 
 	pHalData->bSwChnl = _TRUE;
 	pHalData->bSetChnlBW = _TRUE;
-	rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, 0, 0);
+#ifdef CONFIG_RTL8822B
+	if (bandwidth == 2) {
+		rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, HAL_PRIME_CHNL_OFFSET_LOWER, HAL_PRIME_CHNL_OFFSET_UPPER);
+	} else if (bandwidth == 1) {
+		rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, HAL_PRIME_CHNL_OFFSET_UPPER, 0);
+	} else
+#endif
+			rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, pmp->prime_channel_offset, 0);
 
 	hal_mpt_CCKTxPowerAdjust(pAdapter, pHalData->bCCKinCH14);
 
@@ -339,7 +346,14 @@ void hal_mpt_SetBandwidth(PADAPTER pAdapter)
 
 	pHalData->bSwChnl = _TRUE;
 	pHalData->bSetChnlBW = _TRUE;
-	rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, 0, 0);
+#ifdef CONFIG_RTL8822B
+	if (bandwidth == 2) {
+		rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, HAL_PRIME_CHNL_OFFSET_LOWER, HAL_PRIME_CHNL_OFFSET_UPPER);
+	} else if (bandwidth == 1) {
+		rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, HAL_PRIME_CHNL_OFFSET_UPPER, 0);
+	} else
+#endif
+			rtw_hal_set_chnl_bw(pAdapter, channel, bandwidth, pmp->prime_channel_offset, 0);
 
 	hal_mpt_SwitchRfSetting(pAdapter);
 }

@@ -108,12 +108,20 @@ extern uint rtw_drv_log_level;
 
 #if defined(_dbgdump)
 
+#if defined(DBG_THREAD_PID) && defined(PLATFORM_LINUX)
+#define T_PID_FMT	"(%4u)"
+#define T_PID_ARG	current->pid
+#else /* !DBG_THREAD_PID */
+#define T_PID_FMT	"%s"
+#define T_PID_ARG	""
+#endif /* !DBG_THREAD_PID */
+
 /* with driver-defined prefix */
 #undef RTW_PRINT
 #define RTW_PRINT(fmt, arg...)     \
 	do {\
 		if (_DRV_ALWAYS_ <= rtw_drv_log_level) {\
-			_dbgdump(DRIVER_PREFIX fmt, ##arg);\
+			_dbgdump(T_PID_FMT DRIVER_PREFIX fmt, T_PID_ARG, ##arg);\
 		} \
 	} while (0)
 
@@ -121,7 +129,7 @@ extern uint rtw_drv_log_level;
 #define RTW_ERR(fmt, arg...)     \
 	do {\
 		if (_DRV_ERR_ <= rtw_drv_log_level) {\
-			_dbgdump(DRIVER_PREFIX"ERROR " fmt, ##arg);\
+			_dbgdump(T_PID_FMT DRIVER_PREFIX "ERROR " fmt, T_PID_ARG, ##arg);\
 		} \
 	} while (0)
 
@@ -130,7 +138,7 @@ extern uint rtw_drv_log_level;
 #define RTW_WARN(fmt, arg...)     \
 	do {\
 		if (_DRV_WARNING_ <= rtw_drv_log_level) {\
-			_dbgdump(DRIVER_PREFIX"WARN " fmt, ##arg);\
+			_dbgdump(T_PID_FMT DRIVER_PREFIX "WARN " fmt, T_PID_ARG, ##arg);\
 		} \
 	} while (0)
 
@@ -138,7 +146,7 @@ extern uint rtw_drv_log_level;
 #define RTW_INFO(fmt, arg...)     \
 	do {\
 		if (_DRV_INFO_ <= rtw_drv_log_level) {\
-			_dbgdump(DRIVER_PREFIX fmt, ##arg);\
+			_dbgdump(T_PID_FMT DRIVER_PREFIX fmt, T_PID_ARG, ##arg);\
 		} \
 	} while (0)
 
@@ -147,7 +155,7 @@ extern uint rtw_drv_log_level;
 #define RTW_DBG(fmt, arg...)     \
 	do {\
 		if (_DRV_DEBUG_ <= rtw_drv_log_level) {\
-			_dbgdump(DRIVER_PREFIX fmt, ##arg);\
+			_dbgdump(T_PID_FMT DRIVER_PREFIX fmt, T_PID_ARG, ##arg);\
 		} \
 	} while (0)
 
@@ -379,6 +387,10 @@ ssize_t proc_set_best_channel(struct file *file, const char __user *buffer, size
 
 int proc_get_trx_info_debug(struct seq_file *m, void *v);
 
+#ifdef CONFIG_HUAWEI_PROC
+int proc_get_huawei_trx_info(struct seq_file *m, void *v);
+#endif
+
 int proc_get_rx_signal(struct seq_file *m, void *v);
 ssize_t proc_set_rx_signal(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 int proc_get_hw_status(struct seq_file *m, void *v);
@@ -502,6 +514,7 @@ ssize_t proc_set_new_bcn_max(struct file *file, const char __user *buffer, size_
 
 #ifdef CONFIG_POWER_SAVING
 int proc_get_ps_info(struct seq_file *m, void *v);
+ssize_t proc_set_ps_info(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 #ifdef CONFIG_WMMPS_STA	
 int proc_get_wmmps_info(struct seq_file *m, void *v);
 ssize_t proc_set_wmmps_info(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
@@ -566,6 +579,20 @@ ssize_t proc_set_iqk(struct file *file, const char __user *buffer, size_t count,
 int proc_get_lck_info(struct seq_file *m, void *v);
 ssize_t proc_set_lck(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 #endif /*CONFIG_DBG_RF_CAL*/
+
+#ifdef CONFIG_CTRL_TXSS_BY_TP
+ssize_t proc_set_txss_tp(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
+int proc_get_txss_tp(struct seq_file *m, void *v);
+#ifdef DBG_CTRL_TXSS
+ssize_t proc_set_txss_ctrl(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
+int proc_get_txss_ctrl(struct seq_file *m, void *v);
+#endif
+#endif
+
+#ifdef CONFIG_LPS_CHK_BY_TP
+ssize_t proc_set_lps_chk_tp(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
+int proc_get_lps_chk_tp(struct seq_file *m, void *v);
+#endif
 
 #define _drv_always_		1
 #define _drv_emerg_			2

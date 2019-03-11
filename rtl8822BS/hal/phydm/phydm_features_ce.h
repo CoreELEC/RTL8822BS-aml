@@ -23,6 +23,14 @@
 /*#define PHYDM_TDMA_DIG_SUPPORT*/
 /*#define PHYDM_LNA_SAT_CHK_SUPPORT*/
 
+#if (RTL8822B_SUPPORT)
+	/*#define IS_USE_NEW_TDMA*/
+	#define PHYDM_TDMA_DIG_SUPPORT
+	#ifdef PHYDM_TDMA_DIG_SUPPORT
+	#define IS_USE_NEW_TDMA /*new tdma dig test*/
+	#endif
+#endif
+
 #if (RTL8822B_SUPPORT == 1)
 	#define PHYDM_POWER_TRAINING_SUPPORT
 #endif
@@ -43,7 +51,9 @@
 	#define	CONFIG_ADAPTIVE_SOML
 #endif
 
-
+#if (RTL8822B_SUPPORT == 1)
+	#define	CONFIG_8822B_SPUR_CALIBRATION
+#endif
 
 #if (RTL8822B_SUPPORT == 1)
 	/*#define	CONFIG_DYNAMIC_RX_PATH*/
@@ -72,6 +82,7 @@
 		#if (RTL8822B_SUPPORT == 1)
 			/*#define CONFIG_HL_SMART_ANTENNA_TYPE2*/
 		#endif
+
 	#endif
 #endif
 

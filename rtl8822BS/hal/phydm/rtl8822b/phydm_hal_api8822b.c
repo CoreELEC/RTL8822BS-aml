@@ -122,6 +122,92 @@ phydm_igi_toggle_8822b(
 	odm_set_bb_reg(p_dm, 0xe50, 0x7f, igi);
 }
 
+__iram_odm_func__
+void 
+phydm_8822b_type18_rfe(
+	struct PHY_DM_STRUCT				*p_dm,
+	u8					channel
+)
+{
+
+	if (channel <= 14) {
+	
+		/* signal source */
+		odm_set_bb_reg(p_dm, 0xcb0, 0xffffff, 0x745774);
+		odm_set_bb_reg(p_dm, 0xeb0, 0xffffff, 0x745774);
+		odm_set_bb_reg(p_dm, 0xcb4, MASKBYTE1, 0x57);
+		odm_set_bb_reg(p_dm, 0xeb4, MASKBYTE1, 0x57);
+	
+	} else if ((channel > 35) && (channel <= 64)) {
+		/* signal source */
+		odm_set_bb_reg(p_dm, 0xcb0, 0xffffff, 0x177517);
+		odm_set_bb_reg(p_dm, 0xeb0, 0xffffff, 0x177517);
+		odm_set_bb_reg(p_dm, 0xcb4, MASKLWORD, 0x7557);
+		odm_set_bb_reg(p_dm, 0xeb4, MASKLWORD, 0x7557);
+		odm_set_bb_reg(p_dm, 0xcb8, BIT(5), 0);
+		odm_set_bb_reg(p_dm, 0xeb8, BIT(5), 0);
+	
+	} else if (channel > 64) {
+		/* signal source */
+		odm_set_bb_reg(p_dm, 0xcb0, 0xffffff, 0x177517);
+		odm_set_bb_reg(p_dm, 0xeb0, 0xffffff, 0x177517);
+		odm_set_bb_reg(p_dm, 0xcb4, MASKLWORD, 0x7575);
+		odm_set_bb_reg(p_dm, 0xeb4, MASKLWORD, 0x7575);
+		odm_set_bb_reg(p_dm, 0xcb8, BIT(5), 0);
+		odm_set_bb_reg(p_dm, 0xeb8, BIT(5), 0);
+		
+	}
+
+	/* invertor and antenna switch */
+	if (channel <= 14) {
+		/* inverse or not */
+		odm_set_bb_reg(p_dm, 0xcbc, 0x3f, 0x8);
+		odm_set_bb_reg(p_dm, 0xcbc, (BIT(11) | BIT(10)), 0x2);
+		odm_set_bb_reg(p_dm, 0xebc, 0x3f, 0x8);
+		odm_set_bb_reg(p_dm, 0xebc, (BIT(11) | BIT(10)), 0x2);
+	
+		/* antenna switch table */
+		if ((p_dm->rx_ant_status == BB_PATH_AB) || (p_dm->tx_ant_status == BB_PATH_AB)) {
+			/* 2TX or 2RX */
+			odm_set_bb_reg(p_dm, 0xca0, MASKLWORD, 0xf050);
+			odm_set_bb_reg(p_dm, 0xea0, MASKLWORD, 0xf050);
+		} else if (p_dm->rx_ant_status == p_dm->tx_ant_status) {
+			/* TXA+RXA or TXB+RXB */
+			odm_set_bb_reg(p_dm, 0xca0, MASKLWORD, 0xf055);
+			odm_set_bb_reg(p_dm, 0xea0, MASKLWORD, 0xf055);
+		} else {
+			/* TXB+RXA or TXA+RXB */
+			odm_set_bb_reg(p_dm, 0xca0, MASKLWORD, 0xf550);
+			odm_set_bb_reg(p_dm, 0xea0, MASKLWORD, 0xf550);
+		}
+
+	} else if (channel > 35) {
+		/* inverse or not */
+		odm_set_bb_reg(p_dm, 0xcbc, 0x3f, 0x0);
+		odm_set_bb_reg(p_dm, 0xcbc, (BIT(11) | BIT(10) | BIT(9) | BIT(8)), 0x0);
+		odm_set_bb_reg(p_dm, 0xebc, 0x3f, 0x0);
+		odm_set_bb_reg(p_dm, 0xebc, (BIT(11) | BIT(10) | BIT(9) | BIT(8)), 0x0);
+
+		/* delay 400ns for PAPE */
+		/* odm_set_bb_reg(p_dm, 0x810, MASKBYTE3|BIT20|BIT21|BIT22|BIT23, 0x211); */
+
+		/* antenna switch table */
+		if ((p_dm->rx_ant_status == BB_PATH_AB) || (p_dm->tx_ant_status == BB_PATH_AB)) {
+			/* 2TX or 2RX */
+			odm_set_bb_reg(p_dm, 0xca0, MASKLWORD, 0x5501);
+			odm_set_bb_reg(p_dm, 0xea0, MASKLWORD, 0x5501);
+		} else if (p_dm->rx_ant_status == p_dm->tx_ant_status) {
+			/* TXA+RXA or TXB+RXB */
+			odm_set_bb_reg(p_dm, 0xca0, MASKLWORD, 0x5500);
+			odm_set_bb_reg(p_dm, 0xea0, MASKLWORD, 0x5500);
+		} else {
+			/* TXB+RXA or TXA+RXB */
+			odm_set_bb_reg(p_dm, 0xca0, MASKLWORD, 0x5005);
+			odm_set_bb_reg(p_dm, 0xea0, MASKLWORD, 0x5005);
+		}
+	}
+
+}
 
 __iram_odm_func__
 void 
@@ -460,8 +546,11 @@ phydm_rfe_8822b(
 			odm_set_bb_reg(p_dm, 0xea0, MASKLWORD, 0xa5a5);
 		}
 	} else if (rfe_type == 15) {
-		/* iFEM for Microsoft, 5G low/high band */
+		/* iFEM for Microsoft, 5G low/high band at S0 only */
 		phydm_8822b_type15_rfe(p_dm, channel);
+	} else if (rfe_type == 18) {
+		/* iFEM for Roku, 5G low/high band at S0/S1 */
+		phydm_8822b_type18_rfe(p_dm, channel);
 	}
 	#if (defined(CONFIG_CUMITEK_SMART_ANTENNA))
 	else if (rfe_type == SMTANT_TMP_RFE_TYPE) {
@@ -985,6 +1074,14 @@ config_phydm_write_rf_reg_8822b(
 	odm_set_bb_reg(p_dm, offset_write_rf[path], MASKDWORD, data_and_addr);
 	PHYDM_DBG(p_dm, ODM_PHY_CONFIG, ("config_phydm_write_rf_reg_8822b(): RF-%d 0x%x = 0x%x (original: 0x%x), bit mask = 0x%x\n",
 			path, reg_addr, data, data_original, bit_mask));
+
+#if (defined(CONFIG_RUN_IN_DRV))
+	if (p_dm->support_interface == ODM_ITRF_PCIE)
+		ODM_delay_us(13);
+#elif (defined(CONFIG_RUN_IN_FW))
+	ODM_delay_us(13);
+#endif
+
 	return true;
 }
 
@@ -1088,6 +1185,7 @@ phydm_dynamic_spur_det_eliminate(
 	boolean	s_dopsd = false, s_donbi_a = false, s_docsi = false, s_donbi_b = false;
 
 	/* Reset NBI/CSI everytime after changing channel/BW/band  */
+	odm_set_bb_reg(p_dm, 0x874, BIT(0), 0x0);
 	odm_set_bb_reg(p_dm, 0x880, MASKDWORD, 0);
 	odm_set_bb_reg(p_dm, 0x884, MASKDWORD, 0);
 	odm_set_bb_reg(p_dm, 0x888, MASKDWORD, 0);
@@ -1096,11 +1194,6 @@ phydm_dynamic_spur_det_eliminate(
 	odm_set_bb_reg(p_dm, 0x894, MASKDWORD, 0);
 	odm_set_bb_reg(p_dm, 0x898, MASKDWORD, 0);
 	odm_set_bb_reg(p_dm, 0x89c, MASKDWORD, 0);
-	odm_set_bb_reg(p_dm, 0x874, BIT(0), 0x0);
-
-	odm_set_bb_reg(p_dm, 0x87c, BIT(13), 0x0);
-	odm_set_bb_reg(p_dm, 0xc20, BIT(28), 0x0);
-	odm_set_bb_reg(p_dm, 0xe20, BIT(28), 0x0);
 
 	/* 2G Channel Setting > 20M: 5, 6, 7, 8, 13; 40M: 3~11 */
 	if ((*p_dm->p_channel >= 1) && (*p_dm->p_channel <= 14)) {
@@ -1331,6 +1424,15 @@ phydm_dynamic_spur_det_eliminate(
 	else
 		odm_set_bb_reg(p_dm, 0x82c, 0xff000, 0x97);
 
+	if ((s_donbi_a == true || s_donbi_b == true) && (p_dm->rfe_type == 12)) {
+		if (*p_dm->p_band_width == CHANNEL_WIDTH_20) {
+			if (*p_dm->p_channel >= 5 && *p_dm->p_channel <= 7)
+				odm_set_bb_reg(p_dm, 0x82c, 0xf000, 0x3);
+		}
+	} else {
+		odm_set_bb_reg(p_dm, 0x82c, 0xf000, 0x7);
+	}
+
 	if (s_docsi == true) {
 		if (*p_dm->p_band_width == CHANNEL_WIDTH_20) {
 			if (*p_dm->p_channel == 153)
@@ -1372,6 +1474,27 @@ phydm_dynamic_spur_det_eliminate(
 	}
 
 #endif	/*PHYDM_SPUR_CANCELL_ENABLE_8822B == 1*/
+}
+
+__iram_odm_func__
+void phydm_spur_calibration_8822b(struct PHY_DM_STRUCT *p_dm)
+{
+	if (*p_dm->p_is_scan_in_process)
+		return;
+
+#ifdef CONFIG_8822B_SPUR_CALIBRATION
+		odm_set_bb_reg(p_dm, 0x87c, BIT(13), 0x0);
+		odm_set_bb_reg(p_dm, 0xc20, BIT(28), 0x0);
+		odm_set_bb_reg(p_dm, 0xe20, BIT(28), 0x0);
+		
+		phydm_dynamic_spur_det_eliminate(p_dm);
+		
+		PHYDM_DBG(p_dm, ODM_COMP_API,
+			  ("Enable spur eliminator at normal\n"));
+#else
+		PHYDM_DBG(p_dm, ODM_COMP_API,
+			  ("NBI and CSI notch at normal\n"));
+#endif
 }
 
 __iram_odm_func__
@@ -1447,6 +1570,10 @@ config_phydm_switch_band_8822b(
 			}
 		}
 
+		if (p_dm->rfe_type == 12) {
+			odm_set_rf_reg(p_dm, RF_PATH_A, 0xB3, RFREGOFFSETMASK, 0x3C360);
+			odm_set_rf_reg(p_dm, RF_PATH_B, 0xB3, RFREGOFFSETMASK, 0x3C360);
+		}
 	} else if (central_ch > 35) {
 		/* 5G */
 
@@ -1498,6 +1625,11 @@ config_phydm_switch_band_8822b(
 				odm_set_bb_reg(p_dm, 0x8d8, BIT(27), 0x1);
 			}
 		}
+
+		if (p_dm->rfe_type == 12) {
+			odm_set_rf_reg(p_dm, RF_PATH_A, 0xB3, RFREGOFFSETMASK, 0xFC760);
+			odm_set_rf_reg(p_dm, RF_PATH_B, 0xB3, RFREGOFFSETMASK, 0xFC760);
+		}
 	} else {
 		PHYDM_DBG(p_dm, ODM_PHY_CONFIG, ("config_phydm_switch_band_8822b(): Fail to switch band (ch: %d)\n", central_ch));
 		return false;
@@ -1517,9 +1649,17 @@ config_phydm_switch_band_8822b(
 	}
 
 	/* Dynamic spur detection by PSD and NBI/CSI mask */
-	if (*(p_dm->p_mp_mode))
+	if (*(p_dm->p_mp_mode)) {
+		/* reset NBI */
+		odm_set_bb_reg(p_dm, 0x87c, BIT(13), 0x0);
+		odm_set_bb_reg(p_dm, 0xc20, BIT(28), 0x0);
+		odm_set_bb_reg(p_dm, 0xe20, BIT(28), 0x0);
 		phydm_dynamic_spur_det_eliminate(p_dm);
-
+	} else {
+		/* Normal mode */
+		phydm_spur_calibration_8822b(p_dm);
+	}
+	
 	PHYDM_DBG(p_dm, ODM_PHY_CONFIG, ("config_phydm_switch_band_8822b(): Success to switch band (ch: %d)\n", central_ch));
 	return true;
 }
@@ -1557,7 +1697,7 @@ config_phydm_switch_channel_8822b(
 	if (p_dm->rfe_hwsetting_band != band_index)
 		phydm_rfe_8822b(p_dm, central_ch_8822b);
 
-	if (p_dm->rfe_type == 15)
+	if ((p_dm->rfe_type == 15) || (p_dm->rfe_type == 18))
 		phydm_rfe_8822b(p_dm, central_ch_8822b);
 
 	/* RF register setting */
@@ -1696,9 +1836,17 @@ config_phydm_switch_channel_8822b(
 	phydm_ccapar_by_rfe_8822b(p_dm);
 
 	/* Dynamic spur detection by PSD and NBI/CSI mask */
-	if (*(p_dm->p_mp_mode))
+	if (*(p_dm->p_mp_mode)) {
+		/* reset NBI */
+		odm_set_bb_reg(p_dm, 0x87c, BIT(13), 0x0);
+		odm_set_bb_reg(p_dm, 0xc20, BIT(28), 0x0);
+		odm_set_bb_reg(p_dm, 0xe20, BIT(28), 0x0);
 		phydm_dynamic_spur_det_eliminate(p_dm);
-	
+	} else {
+		/* Normal mode */
+		phydm_spur_calibration_8822b(p_dm);
+	}
+
 	PHYDM_DBG(p_dm, ODM_PHY_CONFIG, ("config_phydm_switch_channel_8822b(): Success to switch channel (ch: %d)\n", central_ch));
 	return true;
 }
@@ -1908,8 +2056,16 @@ config_phydm_switch_bandwidth_8822b(
 	phydm_ccapar_by_rfe_8822b(p_dm);
 
 	/* Dynamic spur detection by PSD and NBI/CSI mask */
-	if (*(p_dm->p_mp_mode))
+	if (*(p_dm->p_mp_mode)) {
+		/* reset NBI */
+		odm_set_bb_reg(p_dm, 0x87c, BIT(13), 0x0);
+		odm_set_bb_reg(p_dm, 0xc20, BIT(28), 0x0);
+		odm_set_bb_reg(p_dm, 0xe20, BIT(28), 0x0);
 		phydm_dynamic_spur_det_eliminate(p_dm);
+	} else {
+		/* Normal mode */
+		phydm_spur_calibration_8822b(p_dm);
+	}
 
 	/* Toggle RX path to avoid RX dead zone issue */
 	odm_set_bb_reg(p_dm, 0x808, MASKBYTE0, 0x0);

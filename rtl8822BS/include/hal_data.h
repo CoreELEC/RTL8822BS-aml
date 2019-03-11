@@ -22,6 +22,8 @@
 	#include <hal_btcoex.h>
 #endif
 
+#include <hal_btcoex_wifionly.h>
+
 #ifdef CONFIG_SDIO_HCI
 	#include <hal_sdio.h>
 #endif
@@ -398,8 +400,9 @@ typedef struct hal_com_data {
 	u8	bDumpRxPkt;
 	u8	bDumpTxPkt;
 	u8	bDisableTXPowerTraining;
-	u8	dis_turboedca;
-
+	u8	dis_turboedca; /* 1: disable turboedca, 
+						  2: disable turboedca and setting EDCA parameter based on the input parameter*/
+	u32 edca_param_mode;
 
 	/****** EEPROM setting.******/
 	u8	bautoload_fail_flag;
@@ -749,7 +752,7 @@ typedef struct hal_com_data {
 	struct hal_iqk_reg_backup iqk_reg_backup[MAX_IQK_INFO_BACKUP_CHNL_NUM];
 
 #ifdef RTW_HALMAC
-	u8 drv_rsvd_page_number;
+	u16 drv_rsvd_page_number;
 #endif
 
 #ifdef CONFIG_BEAMFORMING

@@ -1138,11 +1138,11 @@ phydm_ra_registed(
 
 
 	if (rssi_from_assoc > 40)
-		init_ra_lv = 3;
+		init_ra_lv = 1;
 	else if (rssi_from_assoc > 20)
 		init_ra_lv = 2;
 	else
-		init_ra_lv = 1;
+		init_ra_lv = 3;
 
 	if (p_ra_t->record_ra_info)
 		p_ra_t->record_ra_info(p_dm, macid, p_sta, ra_mask);

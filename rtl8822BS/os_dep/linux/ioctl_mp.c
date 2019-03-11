@@ -486,6 +486,33 @@ int rtw_mp_channel(struct net_device *dev,
 }
 
 
+int rtw_mp_ch_offset(struct net_device *dev,
+		   struct iw_request_info *info,
+		   struct iw_point *wrqu, char *extra)
+{
+
+	PADAPTER padapter = rtw_netdev_priv(dev);
+	HAL_DATA_TYPE	*pHalData	= GET_HAL_DATA(padapter);
+	u8		input[wrqu->length + 1];
+	u32	ch_offset = 0;
+
+	_rtw_memset(input, 0, sizeof(input));
+	if (copy_from_user(input, wrqu->pointer, wrqu->length))
+		return -EFAULT;
+
+	input[wrqu->length] = '\0';
+	ch_offset = rtw_atoi(input);
+	/*RTW_INFO("%s: channel=%d\n", __func__, channel);*/
+	_rtw_memset(extra, 0, wrqu->length);
+	sprintf(extra, "Change prime channel offset %d to %d", padapter->mppriv.prime_channel_offset , ch_offset);
+	padapter->mppriv.prime_channel_offset = ch_offset;
+	SetChannel(padapter);
+
+	wrqu->length = strlen(extra);
+	return 0;
+}
+
+
 int rtw_mp_bandwidth(struct net_device *dev,
 		     struct iw_request_info *info,
 		     struct iw_point *wrqu, char *extra)
@@ -1424,7 +1451,7 @@ int rtw_mp_mon(struct net_device *dev,
 		if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE) {
 			rtw_disassoc_cmd(padapter, 500, 0);
 			rtw_indicate_disconnect(padapter, 0, _FALSE);
-			/*rtw_free_assoc_resources(padapter, 1);*/
+			/*rtw_free_assoc_resources_cmd(padapter, _TRUE, 0);*/
 		}
 		rtw_pm_set_ips(padapter, IPS_NORMAL);
 		sprintf(extra, "monitor mode Stop\n");

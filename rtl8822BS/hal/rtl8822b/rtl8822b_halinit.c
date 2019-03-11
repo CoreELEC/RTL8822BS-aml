@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2017 Realtek Corporation.
+ * Copyright(c) 2015 - 2018 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -49,6 +49,12 @@ void rtl8822b_init_hal_spec(PADAPTER adapter)
 			    ;
 
 	hal_spec->hci_type = 0;
+
+	rtw_macid_ctl_init_sleep_reg(adapter_to_macidctl(adapter)
+		, REG_MACID_SLEEP_8822B
+		, REG_MACID_SLEEP1_8822B
+		, REG_MACID_SLEEP2_8822B
+		, REG_MACID_SLEEP3_8822B);
 }
 
 u32 rtl8822b_power_on(PADAPTER adapter)
@@ -95,16 +101,16 @@ void rtl8822b_power_off(PADAPTER adapter)
 	if (bMacPwrCtrlOn == _FALSE)
 		goto out;
 
+	bMacPwrCtrlOn = _FALSE;
+	rtw_hal_set_hwreg(adapter, HW_VAR_APFM_ON_MAC, &bMacPwrCtrlOn);
+
+	GET_HAL_DATA(adapter)->bFWReady = _FALSE;
+
 	err = rtw_halmac_poweroff(d);
 	if (err) {
 		RTW_ERR("%s: Power OFF Fail!!\n", __FUNCTION__);
 		goto out;
 	}
-
-	bMacPwrCtrlOn = _FALSE;
-	rtw_hal_set_hwreg(adapter, HW_VAR_APFM_ON_MAC, &bMacPwrCtrlOn);
-
-	GET_HAL_DATA(adapter)->bFWReady = _FALSE;
 
 out:
 	return;
@@ -184,10 +190,12 @@ void rtl8822b_init_misc(PADAPTER adapter)
 	PHAL_DATA_TYPE hal;
 	u8 v8 = 0;
 	u32 v32 = 0;
+#ifdef RTW_AMPDU_AGG_RETRY_NEW
+	u32 ctrl, ctrl_new;
+#endif /* RTW_AMPDU_AGG_RETRY_NEW */
 
 
 	hal = GET_HAL_DATA(adapter);
-
 
 	/*
 	 * Sync driver status and hardware setting
@@ -240,6 +248,37 @@ void rtl8822b_init_misc(PADAPTER adapter)
 #ifdef CONFIG_TCP_CSUM_OFFLOAD_RX
 	rtw_hal_rcr_add(adapter, BIT_TCPOFLD_EN_8822B);
 #endif /* CONFIG_TCP_CSUM_OFFLOAD_RX*/
+
+#ifdef RTW_AMPDU_AGG_RETRY_NEW
+	/* Enable AMPDU aggregation mode with retry MPDUs and new MPDUs. */
+	ctrl = rtw_read32(adapter, REG_FWHW_TXQ_CTRL_8822B);
+	ctrl_new = ctrl;
+	RTW_PRINT("%s: default 0x%x = 0x%08x\n",
+		  __FUNCTION__, REG_FWHW_TXQ_CTRL_8822B, ctrl);
+	RTW_PRINT("%s: default AMPDU agg with retry and new: %s\n",
+		  __FUNCTION__, ctrl&BIT_EN_RTY_BK_8822B?"false":"true");
+	if (ctrl & BIT_EN_RTY_BK_8822B) {
+		ctrl_new &= ~BIT_EN_RTY_BK_8822B;
+		RTW_PRINT("%s: Enable AMPDU agg with retry and new!\n",
+			  __FUNCTION__);
+	}
+	/* 0x423[2] */
+#define BIT_EN_RTY_BK_COD_8822B	BIT(2)
+	/* Don't agg if retry packet rate fall back */
+	ctrl_new |= (BIT_EN_RTY_BK_COD_8822B << 24);
+	if (ctrl_new != ctrl) {
+		rtw_write32(adapter, REG_FWHW_TXQ_CTRL_8822B, ctrl_new);
+		ctrl = rtw_read32(adapter, REG_FWHW_TXQ_CTRL_8822B);
+		RTW_PRINT("%s: final 0x%x = 0x%08x (read back:0x%08x)\n",
+			  __FUNCTION__, REG_FWHW_TXQ_CTRL_8822B,
+			  ctrl_new, ctrl);
+	}
+#endif /* RTW_AMPDU_AGG_RETRY_NEW */
+
+#ifdef CONFIG_LPS_PWR_TRACKING
+	rtl8822b_set_fw_thermal_rpt_cmd(adapter, _TRUE, hal->eeprom_thermal_meter + THERMAL_DIFF_TH);
+#endif
+
 }
 
 u32 rtl8822b_init(PADAPTER adapter)

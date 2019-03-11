@@ -50,6 +50,7 @@ get_delta_swing_table_8822b(
 	u8 **temperature_down_b
 #endif
 );
+void aac_check_8822b(struct PHY_DM_STRUCT *p_dm);
 
 void
 phy_lc_calibrate_8822b(

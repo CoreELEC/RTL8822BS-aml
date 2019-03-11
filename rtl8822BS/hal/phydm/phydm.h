@@ -544,6 +544,8 @@ struct	phydm_iot_center {
 	u64			support_ability;	/*PHYDM function Supportability*/
 	u64			pause_ability;	/*PHYDM function pause Supportability*/
 	u64			debug_components;
+	u8			cmn_dbg_msg_period;
+	u8			cmn_dbg_msg_cnt;
 	u32			fw_debug_components;
 	u32			debug_level;
 	u32			num_qry_phy_status_all;		/*CCK + OFDM*/
@@ -716,7 +718,7 @@ struct	phydm_iot_center {
 	u8			tdma_dig_state_number;
 	u8			tdma_dig_low_upper_bond;
 	u8			fix_expire_to_zero;
-	boolean		original_dig_restore;
+	boolean			original_dig_restore;
 	/*---------------------------*/
 
 	/*[AntDiv]*/
@@ -740,6 +742,8 @@ struct	phydm_iot_center {
 	u8			path_select;
 	u8			antdiv_evm_en;
 	u8			bdc_holdstate;
+	u8			antdiv_counter;
+
 	/*---------------------------*/
 	
 	u8			ndpa_period;
@@ -849,14 +853,17 @@ struct	phydm_iot_center {
 
 /*=== PHYDM Timer ========================================== (start)*/
 
-	struct timer_list	mpt_dig_timer;	/*MPT DIG timer*/
-	struct timer_list	path_div_switch_timer;
-	struct timer_list	cck_path_diversity_timer;	/*2011.09.27 add for path Diversity*/
-	struct timer_list	fast_ant_training_timer;
-#ifdef ODM_EVM_ENHANCE_ANTDIV
-	struct timer_list	evm_fast_ant_training_timer;
+	struct phydm_timer_list	mpt_dig_timer;	/*MPT DIG timer*/
+	struct phydm_timer_list	path_div_switch_timer;
+	struct phydm_timer_list	cck_path_diversity_timer;	/*2011.09.27 add for path Diversity*/
+	struct phydm_timer_list	fast_ant_training_timer;
+#ifdef PHYDM_TDMA_DIG_SUPPORT
+	struct phydm_timer_list tdma_dig_timer;
 #endif
-	struct timer_list	sbdcnt_timer;
+#ifdef ODM_EVM_ENHANCE_ANTDIV
+	struct phydm_timer_list	evm_fast_ant_training_timer;
+#endif
+	struct phydm_timer_list	sbdcnt_timer;
 
 
 /*=== PHYDM Workitem ======================================= (start)*/
@@ -922,6 +929,9 @@ struct	phydm_iot_center {
 	struct phydm_fa_struct					false_alm_cnt;
 #ifdef PHYDM_TDMA_DIG_SUPPORT
 	struct phydm_fa_acc_struct				false_alm_cnt_acc;
+#ifdef IS_USE_NEW_TDMA
+	struct phydm_fa_acc_struct	false_alm_cnt_acc_low;
+#endif
 #endif
 	struct _sw_antenna_switch_				dm_swat_table;
 	struct phydm_cfo_track_struct			dm_cfo_track;

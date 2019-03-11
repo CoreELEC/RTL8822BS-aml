@@ -241,6 +241,8 @@ odm_config_rf_with_header_file(
 				READ_AND_CONFIG_MP(8822b, _txpwr_lmt_type16);
 			else if (p_dm->rfe_type == 17)
 				READ_AND_CONFIG_MP(8822b, _txpwr_lmt_type17);
+			else if (p_dm->rfe_type == 18)
+				READ_AND_CONFIG_MP(8822b, _txpwr_lmt_type18);
 			else
 				READ_AND_CONFIG_MP(8822b, _txpwr_lmt);
 		}
@@ -464,6 +466,8 @@ odm_config_rf_with_tx_pwr_track_header_file(
 			READ_AND_CONFIG_MP(8822b, _txpowertrack_type16);
 		else if (p_dm->rfe_type == 17)
 			READ_AND_CONFIG_MP(8822b, _txpowertrack_type17);
+		else if (p_dm->rfe_type == 18)
+			READ_AND_CONFIG_MP(8822b, _txpowertrack_type18);
 		else
 			READ_AND_CONFIG_MP(8822b, _txpowertrack);
 	}
@@ -702,6 +706,8 @@ odm_config_bb_with_header_file(
 				READ_AND_CONFIG_MP(8822b, _phy_reg_pg_type16);
 			else if (p_dm->rfe_type == 17)
 				READ_AND_CONFIG_MP(8822b, _phy_reg_pg_type17);
+			else if (p_dm->rfe_type == 18)
+				READ_AND_CONFIG_MP(8822b, _phy_reg_pg_type18);
 			else
 				READ_AND_CONFIG_MP(8822b, _phy_reg_pg);
 		}

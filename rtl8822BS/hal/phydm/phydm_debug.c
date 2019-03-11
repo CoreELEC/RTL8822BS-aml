@@ -72,6 +72,8 @@ phydm_init_debug_setting(
 	p_dm->fw_buff_is_enpty = true;
 	p_dm->pre_c2h_seq = 0;
 	p_dm->c2h_cmd_start = 0;
+	p_dm->cmn_dbg_msg_cnt = PHYDM_WATCH_DOG_PERIOD;
+	p_dm->cmn_dbg_msg_period = PHYDM_WATCH_DOG_PERIOD;
 	phydm_reset_rx_rate_distribution(p_dm);
 }
 
@@ -834,7 +836,7 @@ void phydm_sbd_check(
 #endif
 
 void phydm_sbd_callback(
-	struct timer_list		*p_timer
+	struct phydm_timer_list		*p_timer
 )
 {
 #ifdef CONFIG_PHYDM_DEBUG_FUNCTION
@@ -1214,6 +1216,13 @@ phydm_basic_dbg_message
 
 	/* if (!(p_dm->debug_components & ODM_COMP_COMMON)) */
 	/* return; */
+
+	if (p_dm->cmn_dbg_msg_cnt < p_dm->cmn_dbg_msg_period) {
+		p_dm->cmn_dbg_msg_cnt += PHYDM_WATCH_DOG_PERIOD;
+		return;
+	} else {
+		p_dm->cmn_dbg_msg_cnt = PHYDM_WATCH_DOG_PERIOD;
+	}
 
 	PHYDM_DBG(p_dm, ODM_COMP_COMMON, ("[PHYDM Common MSG] System up time: ((%d sec))----->\n", p_dm->phydm_sys_up_time));
 
@@ -1779,6 +1788,14 @@ phydm_debug_trace(
 			p_dm->debug_components &= ~(one << dm_value[0]);
 		else
 			PHYDM_SNPRINTF((output + used, out_len - used, "%s\n", "[Warning!!!]  1:enable,  2:disable"));
+	}
+	if ((BIT(dm_value[0]) == ODM_COMP_COMMON) && (dm_value[1] == 1)) {
+		p_dm->cmn_dbg_msg_period = (u8)dm_value[2];
+
+		if (p_dm->cmn_dbg_msg_period < PHYDM_WATCH_DOG_PERIOD)
+			p_dm->cmn_dbg_msg_period = PHYDM_WATCH_DOG_PERIOD;
+
+		PHYDM_SNPRINTF((output + used, out_len - used, "cmn_dbg_msg_period=%d\n", p_dm->cmn_dbg_msg_period));
 	}
 	PHYDM_SNPRINTF((output + used, out_len - used, "pre-DbgComponents = 0x%llx\n", pre_debug_components));
 	PHYDM_SNPRINTF((output + used, out_len - used, "Curr-DbgComponents = 0x%llx\n", p_dm->debug_components));

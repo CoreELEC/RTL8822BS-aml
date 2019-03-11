@@ -420,6 +420,7 @@ _iqk_reload_iqk_setting_8822b(
 	u8 i, path, idx;
 	u16 iqk_apply[2] = {0xc94, 0xe94};
 	u32 tmp;
+	boolean report;
 
 	for (path = 0; path < 2; path++) {
 		if (reload_idx == 2) {
@@ -444,10 +445,14 @@ _iqk_reload_iqk_setting_8822b(
 				odm_write_4byte(p_dm, 0x1bd8,	((0xc0000000 >> idx) + 0x3) + (i * 4) + (p_iqk_info->IQK_CFIR_real[channel][path][idx][i] << 9));
 				odm_write_4byte(p_dm, 0x1bd8, ((0xc0000000 >> idx) + 0x1) + (i * 4) + (p_iqk_info->IQK_CFIR_imag[channel][path][idx][i] << 9));
 			}
-			if (idx == 0)
-				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(0), ~(p_iqk_info->IQK_fail_report[channel][path][idx]));
-			else
-				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(10), ~(p_iqk_info->IQK_fail_report[channel][path][idx]));
+			if (idx == 0) {
+				report = ~(p_iqk_info->IQK_fail_report[channel][path][idx]);
+				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(0), report);
+
+			} else {
+				report = ~(p_iqk_info->IQK_fail_report[channel][path][idx]);
+				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(10), report);
+			}
 		}
 		odm_set_bb_reg(p_dm, 0x1bd8, MASKDWORD, 0x0);
 		odm_set_bb_reg(p_dm, 0x1b0c, BIT(13) | BIT(12), 0x0);

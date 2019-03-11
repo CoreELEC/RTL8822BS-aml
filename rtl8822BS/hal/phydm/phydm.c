@@ -2652,6 +2652,12 @@ odm_init_all_timers(
 	odm_ant_div_timers(p_dm, INIT_ANTDIV_TIMMER);
 #endif
 
+#if (defined(PHYDM_TDMA_DIG_SUPPORT))
+#ifdef IS_USE_NEW_TDMA
+	phydm_tdma_dig_timers(p_dm, INIT_TDMA_DIG_TIMMER);
+#endif
+#endif
+
 	phydm_adaptive_soml_timers(p_dm, INIT_SOML_TIMMER);
 
 #ifdef PHYDM_LNA_SAT_CHK_SUPPORT

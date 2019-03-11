@@ -1657,6 +1657,7 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 	u16 cap, ht_cap = _FALSE;
 	uint ie_len = 0;
 	int group_cipher, pairwise_cipher;
+	u8 mfp_opt = MFP_NO;
 	u8	channel, network_type, supportRate[NDIS_802_11_LENGTH_RATES_EX];
 	int supportRateNum = 0;
 	u8 OUI1[] = {0x00, 0x50, 0xf2, 0x01};
@@ -1787,7 +1788,7 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 	psecuritypriv->wpa2_pairwise_cipher = _NO_PRIVACY_;
 	p = rtw_get_ie(ie + _BEACON_IE_OFFSET_, _RSN_IE_2_, &ie_len, (pbss_network->IELength - _BEACON_IE_OFFSET_));
 	if (p && ie_len > 0) {
-		if (rtw_parse_wpa2_ie(p, ie_len + 2, &group_cipher, &pairwise_cipher, NULL) == _SUCCESS) {
+		if (rtw_parse_wpa2_ie(p, ie_len + 2, &group_cipher, &pairwise_cipher, NULL, &mfp_opt) == _SUCCESS) {
 			psecuritypriv->dot11AuthAlgrthm = dot11AuthAlgrthm_8021X;
 
 			psecuritypriv->dot8021xalg = 1;/* psk,  todo:802.1x */
@@ -1902,6 +1903,12 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 			break;
 
 	}
+
+	if (mfp_opt == MFP_INVALID) {
+		RTW_INFO(FUNC_ADPT_FMT" invalid MFP setting\n", FUNC_ADPT_ARG(padapter));
+		return _FAIL;
+	}
+	psecuritypriv->mfp_opt = mfp_opt;
 
 	/* wmm */
 	ie_len = 0;
@@ -4417,53 +4424,6 @@ void tx_beacon_timer_handlder(void *ctx)
 }
 #endif
 
-void rtw_ap_acdata_control(_adapter *padapter, u8 power_mode)
-{
-	_irqL irqL;
-	_list	*phead, *plist;
-	struct sta_info *psta = NULL;
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	u8 sta_alive_num = 0, i;
-	char sta_alive_list[NUM_STA];
-
-#ifdef CONFIG_MCC_MODE
-	if (MCC_EN(padapter) && rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC))
-		/* driver doesn't access macid sleep reg under MCC */
-		return;
-#endif
-
-	/*RTW_INFO(FUNC_ADPT_FMT " associated sta num:%d, make macid_%s!!\n",
-				FUNC_ADPT_ARG(padapter), pstapriv->asoc_list_cnt, power_mode ? "sleep" : "wakeup");*/
-
-	_enter_critical_bh(&pstapriv->asoc_list_lock, &irqL);
-
-	phead = &pstapriv->asoc_list;
-	plist = get_next(phead);
-
-	while ((rtw_end_of_queue_search(phead, plist)) == _FALSE) {
-		int stainfo_offset;
-
-		psta = LIST_CONTAINOR(plist, struct sta_info, asoc_list);
-		plist = get_next(plist);
-
-		stainfo_offset = rtw_stainfo_offset(pstapriv, psta);
-		if (stainfo_offset_valid(stainfo_offset))
-			sta_alive_list[sta_alive_num++] = stainfo_offset;
-	}
-	_exit_critical_bh(&pstapriv->asoc_list_lock, &irqL);
-
-	for (i = 0; i < sta_alive_num; i++) {
-		psta = rtw_get_stainfo_by_offset(pstapriv, sta_alive_list[i]);
-
-		if (psta) {
-			if (power_mode)
-				rtw_hal_macid_sleep(padapter, psta->cmn.mac_id);
-			else
-				rtw_hal_macid_wakeup(padapter, psta->cmn.mac_id);
-		}
-	}
-}
-
 void rtw_ap_parse_sta_capability(_adapter *adapter, struct sta_info *sta, u8 *cap)
 {
 	sta->capability = RTW_GET_LE16(cap);
@@ -4515,6 +4475,7 @@ u16 rtw_ap_parse_sta_security_ie(_adapter *adapter, struct sta_info *sta, struct
 	u8 *wpa_ie;
 	int wpa_ie_len;
 	int group_cipher = 0, pairwise_cipher = 0;
+	u8 mfp_opt = MFP_NO;
 	u16 status = _STATS_SUCCESSFUL_;
 
 	sta->dot8021xalg = 0;
@@ -4529,7 +4490,7 @@ u16 rtw_ap_parse_sta_security_ie(_adapter *adapter, struct sta_info *sta, struct
 		wpa_ie = elems->rsn_ie;
 		wpa_ie_len = elems->rsn_ie_len;
 
-		if (rtw_parse_wpa2_ie(wpa_ie - 2, wpa_ie_len + 2, &group_cipher, &pairwise_cipher, NULL) == _SUCCESS) {
+		if (rtw_parse_wpa2_ie(wpa_ie - 2, wpa_ie_len + 2, &group_cipher, &pairwise_cipher, NULL, &mfp_opt) == _SUCCESS) {
 			sta->dot8021xalg = 1;/* psk, todo:802.1x */
 			sta->wpa_psk |= BIT(1);
 
@@ -4568,6 +4529,11 @@ u16 rtw_ap_parse_sta_security_ie(_adapter *adapter, struct sta_info *sta, struct
 		wpa_ie = NULL;
 		wpa_ie_len = 0;
 	}
+
+	if ((sec->mfp_opt == MFP_REQUIRED && mfp_opt == MFP_NO) || mfp_opt == MFP_INVALID) 
+		status = WLAN_STATUS_ROBUST_MGMT_FRAME_POLICY_VIOLATION;
+	else if (sec->mfp_opt >= MFP_OPTIONAL && mfp_opt >= MFP_OPTIONAL)
+		sta->flags |= WLAN_STA_MFP;
 
 	if (status != _STATS_SUCCESSFUL_)
 		goto exit;

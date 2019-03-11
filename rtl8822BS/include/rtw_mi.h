@@ -109,6 +109,7 @@ struct mi_state {
 #define rtw_mi_get_assoced_sta_num(adapter)	DEV_STA_LD_NUM(adapter_to_dvobj(adapter))
 #define rtw_mi_get_ap_num(adapter)			DEV_AP_NUM(adapter_to_dvobj(adapter))
 #define rtw_mi_get_mesh_num(adapter)		DEV_MESH_NUM(adapter_to_dvobj(adapter))
+u8 rtw_mi_get_assoc_if_num(_adapter *adapter);
 
 /* For now, not return union_ch/bw/offset */
 void rtw_mi_status(_adapter *adapter, struct mi_state *mstate);
@@ -167,9 +168,6 @@ void rtw_mi_buddy_set_scan_deny(_adapter *adapter, u32 ms);
 
 u8 rtw_mi_is_scan_deny(_adapter *adapter);
 u8 rtw_mi_buddy_is_scan_deny(_adapter *adapter);
-
-u8 rtw_mi_issue_nulldata(_adapter *padapter, unsigned char *da, unsigned int power_mode, int try_cnt, int wait_ms);
-u8 rtw_mi_buddy_issue_nulldata(_adapter *padapter, unsigned char *da, unsigned int power_mode, int try_cnt, int wait_ms);
 
 void rtw_mi_beacon_update(_adapter *padapter);
 void rtw_mi_buddy_beacon_update(_adapter *padapter);
@@ -279,10 +277,5 @@ _adapter *rtw_mi_get_ap_adapter(_adapter *padapter);
 #endif
 
 void rtw_mi_update_ap_bmc_camid(_adapter *padapter, u8 camid_a, u8 camid_b);
-
-#ifdef CONFIG_AP_MODE
-void rtw_mi_ap_acdata_control(_adapter *padapter, u8 power_mode);
-void rtw_mi_buddy_ap_acdata_control(_adapter *padapter, u8 power_mode);
-#endif /*CONFIG_AP_MODE*/
 
 #endif /*__RTW_MI_H_*/

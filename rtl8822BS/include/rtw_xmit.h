@@ -923,9 +923,9 @@ extern s32 rtw_xmit_classifier(_adapter *padapter, struct xmit_frame *pxmitframe
 extern u32 rtw_calculate_wlan_pkt_size_by_attribue(struct pkt_attrib *pattrib);
 #define rtw_wlan_pkt_size(f) rtw_calculate_wlan_pkt_size_by_attribue(&f->attrib)
 extern s32 rtw_xmitframe_coalesce(_adapter *padapter, _pkt *pkt, struct xmit_frame *pxmitframe);
-#ifdef CONFIG_IEEE80211W
+#if defined(CONFIG_IEEE80211W) || defined(CONFIG_RTW_MESH)
 extern s32 rtw_mgmt_xmitframe_coalesce(_adapter *padapter, _pkt *pkt, struct xmit_frame *pxmitframe);
-#endif /* CONFIG_IEEE80211W */
+#endif
 #ifdef CONFIG_TDLS
 extern struct tdls_txmgmt *ptxmgmt;
 s32 rtw_xmit_tdls_coalesce(_adapter *padapter, struct xmit_frame *pxmitframe, struct tdls_txmgmt *ptxmgmt);

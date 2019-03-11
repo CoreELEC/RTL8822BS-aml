@@ -284,10 +284,12 @@ odm_cfo_tracking(
 
 #ifdef ODM_CONFIG_BT_COEXIST
 		/* 4 1.5 BT case: Disable CFO tracking */
-		if (p_dm->bt_info_table.is_bt_enabled) {
-			p_cfo_track->is_adjust = false;
-			phydm_set_crystal_cap(p_dm, p_cfo_track->def_x_cap);
-			PHYDM_DBG(p_dm, DBG_CFO_TRK, ("odm_cfo_tracking(): Disable CFO tracking for BT!!\n"));
+		if ((*p_dm->p_channel >= 1) && (*p_dm->p_channel <= 14)) {
+			if (p_dm->bt_info_table.is_bt_enabled) {
+				p_cfo_track->is_adjust = false;
+				phydm_set_crystal_cap(p_dm, p_cfo_track->def_x_cap);
+				PHYDM_DBG(p_dm, DBG_CFO_TRK, ("odm_cfo_tracking(): Disable CFO tracking for BT!!\n"));
+			}
 		}
 #if 0
 		/* 4 1.6 Big jump */

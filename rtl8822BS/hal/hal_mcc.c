@@ -1824,11 +1824,22 @@ void rtw_hal_mcc_issue_null_data(_adapter *padapter, u8 chbw_allow, u8 ps_mode)
 		/* issue null data to inform ap station will leave */
 		if (is_client_associated_to_ap(iface)) {
 			struct mlme_ext_priv *mlmeext = &iface->mlmeextpriv;
+			struct mlme_ext_info *mlmeextinfo = &mlmeext->mlmext_info;
 			u8 ch = mlmeext->cur_channel;
 			u8 bw = mlmeext->cur_bwmode;
 			u8 offset = mlmeext->cur_ch_offset;
+			struct sta_info *sta = rtw_get_stainfo(&iface->stapriv, get_my_bssid(&(mlmeextinfo->network)));
+
+			if (!sta)
+				continue;
 
 			set_channel_bwmode(iface, ch, bw, offset);
+
+			if (ps_mode)
+				rtw_hal_macid_sleep(iface, sta->cmn.mac_id);
+			else
+				rtw_hal_macid_wakeup(iface, sta->cmn.mac_id);
+
 			issue_nulldata(iface, NULL, ps_mode, 3, 50);
 		}
 	}

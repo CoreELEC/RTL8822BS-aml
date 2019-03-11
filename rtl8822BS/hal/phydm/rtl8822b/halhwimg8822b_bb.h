@@ -100,6 +100,16 @@ odm_read_and_config_mp_8822b_phy_reg_pg_type17(/* tc: Test Chip, mp: mp Chip*/
 u32	odm_get_version_mp_8822b_phy_reg_pg_type17(void);
 
 /******************************************************************************
+*                           phy_reg_pg_type18.TXT
+******************************************************************************/
+
+void
+odm_read_and_config_mp_8822b_phy_reg_pg_type18(/* tc: Test Chip, mp: mp Chip*/
+	struct	PHY_DM_STRUCT *p_dm
+);
+u32	odm_get_version_mp_8822b_phy_reg_pg_type18(void);
+
+/******************************************************************************
 *                           phy_reg_pg_type2.TXT
 ******************************************************************************/
 

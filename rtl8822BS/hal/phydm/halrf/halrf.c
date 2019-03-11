@@ -1462,14 +1462,38 @@ halrf_lck_trigger(
 		ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("== Return the LCK CMD, because RFK is in Progress ==\n"));
 }
 
+void halrf_aac_check(struct PHY_DM_STRUCT *p_dm)
+{
+	switch (p_dm->support_ic_type) {
+#if (RTL8821C_SUPPORT == 1)
+	case ODM_RTL8821C:
+#if 0
+		aac_check_8821c(dm);
+#endif
+		break;
+#endif
+#if (RTL8822B_SUPPORT == 1)
+	case ODM_RTL8822B:
+#if 1
+		aac_check_8822b(p_dm);
+#endif
+		break;
+#endif
+	default:
+		break;
+	}
+}
+
 void
 halrf_init(
 	void			*p_dm_void
 )
 {
-	struct PHY_DM_STRUCT		*p_dm = (struct PHY_DM_STRUCT *)p_dm_void;
-	
+	struct PHY_DM_STRUCT	*p_dm = (struct PHY_DM_STRUCT *)p_dm_void;
+	struct _hal_rf_	*p_rf = &(p_dm->rf_table);
+
 	ODM_RT_TRACE(p_dm, ODM_COMP_INIT, ODM_DBG_LOUD, ("HALRF_Init\n"));
+	p_rf->aac_checked = false;
 
 	if (*(p_dm->p_mp_mode) == true)
 		halrf_supportability_init_mp(p_dm);
@@ -1477,8 +1501,7 @@ halrf_init(
 		halrf_supportability_init(p_dm);
 
 	/*Init all RF funciton*/
-	/*iqk_init();*/
-	/*dpk_init();*/
+	halrf_aac_check(p_dm);
 }
 
 

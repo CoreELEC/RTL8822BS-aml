@@ -162,6 +162,7 @@ struct _hal_rf_ {
 	boolean	*p_is_con_tx;
 	boolean	*p_is_single_tone;
 	boolean	*p_is_carrier_suppresion;
+	boolean	aac_checked;
 
 	u8		*p_mp_rate_index;
 	u32		p_rate_index;

@@ -571,11 +571,11 @@ void	*p_dm_void)
 	
 	if (pg_therm != 0xff) {
 		pg_therm = pg_therm & 0x1f;
-		if ((pg_therm & BIT(0)) == 0) {
+		if ((pg_therm & BIT(0)) == 0)
 			p_power_trim_info->thermal = (-1 * (pg_therm >> 1));
-		} else {
+		else
 			p_power_trim_info->thermal = (pg_therm >> 1);
-		}
+	
 		p_power_trim_info->flag |= KFREE_FLAG_THERMAL_K_ON;
 	}
 	

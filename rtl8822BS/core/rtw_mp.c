@@ -120,7 +120,7 @@ static void _init_mp_priv_(struct mp_priv *pmp_priv)
 
 	pmp_priv->channel = 1;
 	pmp_priv->bandwidth = CHANNEL_WIDTH_20;
-	pmp_priv->prime_channel_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
+	pmp_priv->prime_channel_offset = HAL_PRIME_CHNL_OFFSET_LOWER;
 	pmp_priv->rateidx = RATE_1M;
 	pmp_priv->txpoweridx = 0x2A;
 
@@ -147,6 +147,9 @@ static void _init_mp_priv_(struct mp_priv *pmp_priv)
 	pmp_priv->bloopback = _FALSE;
 
 	pmp_priv->bloadefusemap = _FALSE;
+#if (CONFIG_BTCOEX_SUPPORT_WIFI_ONLY_CFG == 1)
+	pmp_priv->CureFuseBTCoex = 0x00;
+#endif
 
 	pnetwork = &pmp_priv->mp_network.network;
 	_rtw_memcpy(pnetwork->MacAddress, pmp_priv->network_macaddr, ETH_ALEN);
@@ -535,7 +538,7 @@ static void  PHY_SetRFPathSwitch(PADAPTER padapter , BOOLEAN bMain) {
 #ifdef CONFIG_RTL8188E
 		phy_set_rf_path_switch_8188e(padapter, bMain);
 #endif
-	} else if (IS_HARDWARE_TYPE_8814A(padapter)) {	
+	} else if (IS_HARDWARE_TYPE_8814A(padapter)) {
 #ifdef CONFIG_RTL8814A
 		phy_set_rf_path_switch_8814a(padapter, bMain);
 #endif
@@ -582,7 +585,7 @@ static void phy_switch_rf_path_set(PADAPTER padapter , u8 *prf_set_State) {
 		/* Do IQK when switching to BTG/WLG, requested by RF Binson */
 		if (prf_set_State == SWITCH_TO_BTG || prf_set_State == SWITCH_TO_WLG)
 			PHY_IQCalibrate(prf_set_State, FALSE);
-	}		
+	}
 #endif
 
 }
@@ -890,7 +893,7 @@ u32 mp_join(PADAPTER padapter, u8 mode)
 	if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE) {
 		rtw_disassoc_cmd(padapter, 500, 0);
 		rtw_indicate_disconnect(padapter, 0, _FALSE);
-		rtw_free_assoc_resources(padapter, 1);
+		rtw_free_assoc_resources_cmd(padapter, _TRUE, 0);
 	}
 	pmppriv->prev_fw_state = get_fwstate(pmlmepriv);
 	/*pmlmepriv->fw_state = WIFI_MP_STATE;*/
@@ -1015,7 +1018,7 @@ s32 mp_start_test(PADAPTER padapter)
 
 	mpt_ProStartTest(padapter);
 
-	/*mp_join(padapter, WIFI_FW_ADHOC_STATE);*/ /* solve FW IQK Fail,Becon Err */
+	mp_join(padapter, WIFI_FW_ADHOC_STATE);
 
 	return res;
 }
@@ -1040,7 +1043,7 @@ void mp_stop_test(PADAPTER padapter)
 		rtw_indicate_disconnect(padapter, 0, _FALSE);
 
 		/* 3 2. clear psta used in mp test mode.
-		*	rtw_free_assoc_resources(padapter, 1); */
+		*	rtw_free_assoc_resources(padapter, _TRUE); */
 		psta = rtw_get_stainfo(&padapter->stapriv, tgt_network->network.MacAddress);
 		if (psta)
 			rtw_free_stainfo(padapter, psta);
@@ -1808,7 +1811,7 @@ void SetPacketTx(PADAPTER padapter)
 	_rtw_memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
 	_rtw_memcpy(pattrib->ra, pattrib->dst, ETH_ALEN);
 	bmcast = IS_MCAST(pattrib->ra);
-	if (bmcast) 
+	if (bmcast)
 		pattrib->psta = rtw_get_bcmc_stainfo(padapter);
 	else
 		pattrib->psta = rtw_get_stainfo(&padapter->stapriv, get_bssid(&padapter->mlmepriv));

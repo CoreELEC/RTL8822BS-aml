@@ -649,7 +649,6 @@ static u32 _rtw_mi_start_drv_threads(_adapter *adapter, bool exclude_self)
 		if (iface) {
 			if ((exclude_self) && (iface == adapter))
 				continue;
-
 			if (rtw_start_drv_threads(iface) == _FAIL) {
 				_status = _FAIL;
 				break;
@@ -676,9 +675,8 @@ static void _rtw_mi_stop_drv_threads(_adapter *adapter, bool exclude_self)
 	for (i = 0; i < dvobj->iface_nums; i++) {
 		iface = dvobj->padapters[i];
 		if (iface) {
-		    	if ((exclude_self) && (iface == adapter))
+			if ((exclude_self) && (iface == adapter))
 				continue;
-
 			rtw_stop_drv_threads(iface);
 		}
 	}
@@ -798,48 +796,6 @@ void rtw_mi_buddy_set_scan_deny(_adapter *adapter, u32 ms)
 }
 #endif /*CONFIG_SET_SCAN_DENY_TIMER*/
 
-struct nulldata_param {
-	unsigned char *da;
-	unsigned int power_mode;
-	int try_cnt;
-	int wait_ms;
-};
-
-static u8 _rtw_mi_issue_nulldata(_adapter *padapter, void *data)
-{
-	struct nulldata_param *pnulldata_param = (struct nulldata_param *)data;
-
-	if (is_client_associated_to_ap(padapter) == _TRUE) {
-		/* TODO: TDLS peers */
-		issue_nulldata(padapter, pnulldata_param->da, pnulldata_param->power_mode, pnulldata_param->try_cnt, pnulldata_param->wait_ms);
-		return _TRUE;
-	}
-	return _FALSE;
-}
-
-u8 rtw_mi_issue_nulldata(_adapter *padapter, unsigned char *da, unsigned int power_mode, int try_cnt, int wait_ms)
-{
-	struct nulldata_param nparam;
-
-	nparam.da = da;
-	nparam.power_mode = power_mode;/*0 or 1*/
-	nparam.try_cnt = try_cnt;
-	nparam.wait_ms = wait_ms;
-
-	return _rtw_mi_process(padapter, _FALSE, &nparam, _rtw_mi_issue_nulldata);
-}
-u8 rtw_mi_buddy_issue_nulldata(_adapter *padapter, unsigned char *da, unsigned int power_mode, int try_cnt, int wait_ms)
-{
-	struct nulldata_param nparam;
-
-	nparam.da = da;
-	nparam.power_mode = power_mode;
-	nparam.try_cnt = try_cnt;
-	nparam.wait_ms = wait_ms;
-
-	return _rtw_mi_process(padapter, _TRUE, &nparam, _rtw_mi_issue_nulldata);
-}
-
 static u8 _rtw_mi_beacon_update(_adapter *padapter, void *data)
 {
 	if (!MLME_IS_STA(padapter)
@@ -906,7 +862,6 @@ u8 _rtw_mi_busy_traffic_check(_adapter *padapter, void *data)
 		if (check_sc_interval) {
 			/* Miracast can't do AP scan*/
 			passtime = rtw_get_passing_time_ms(pmlmepriv->lastscantime);
-			pmlmepriv->lastscantime = rtw_get_current_time();
 			if (passtime > BUSY_TRAFFIC_SCAN_DENY_PERIOD) {
 				RTW_INFO(ADPT_FMT" bBusyTraffic == _TRUE\n", ADPT_ARG(padapter));
 				return _TRUE;
@@ -1518,27 +1473,20 @@ void rtw_mi_update_ap_bmc_camid(_adapter *padapter, u8 camid_a, u8 camid_b)
 #endif
 }
 
-#ifdef CONFIG_AP_MODE
-static u8 _rtw_mi_ap_acdata_control(_adapter *padapter, void *data)
+u8 rtw_mi_get_assoc_if_num(_adapter *adapter)
 {
-	u8 power_mode = *(u8 *)data;
-	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	u8 n_assoc_iface = 0;
+#if 1
+	u8 i;
 
-	if (MLME_IS_AP(padapter) || MLME_IS_MESH(padapter))
-		rtw_ap_acdata_control(padapter, power_mode);
-	return _TRUE;
+	for (i = 0; i < dvobj->iface_nums; i++) {
+		if (check_fwstate(&(dvobj->padapters[i]->mlmepriv), WIFI_ASOC_STATE))
+			n_assoc_iface++;
+	}
+#else
+	n_assoc_iface = DEV_STA_LD_NUM(dvobj) + DEV_AP_NUM(dvobj) + DEV_ADHOC_NUM(dvobj) + DEV_MESH_NUM(dvobj);
+#endif
+	return n_assoc_iface;
 }
 
-void rtw_mi_ap_acdata_control(_adapter *padapter, u8 power_mode)
-{
-	u8 in_data = power_mode;
-
-	_rtw_mi_process(padapter, _FALSE, &in_data, _rtw_mi_ap_acdata_control);
-}
-void rtw_mi_buddy_ap_acdata_control(_adapter *padapter, u8 power_mode)
-{
-	u8 in_data = power_mode;
-
-	_rtw_mi_process(padapter, _TRUE, &in_data, _rtw_mi_ap_acdata_control);
-}
-#endif /*CONFIG_AP_MODE*/
